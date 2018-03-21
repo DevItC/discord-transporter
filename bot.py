@@ -67,8 +67,9 @@ class DiscordScraper:
                     ret.append(parsed.pop())
                 else:
                     breakdown = False
-                    for i in range(len(parsed)):
-                        if (parsed[i]!=self.latest_parsed[i]):
+                    length = min(len(parsed), len(latest_parsed))
+                    for i in range(length):
+                        if (parsed[-i]!=self.latest_parsed[-i]):
                             breakdown = True
                             break
                     if (breakdown):
