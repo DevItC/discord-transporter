@@ -13,61 +13,66 @@ from urllib.parse import urlparse
 
 
 class DiscordScraper:
-    def __init__(self, username, password, channel):
+    def __init__(self, username, password, server, channel):
         options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
+        options.add_argument('--headless')
         self.driver = webdriver.Chrome(chrome_options=options)
-        self.driver.get('https://devitconsultancy.slack.com')
+        self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
 
-        email = self.driver.find_element_by_id('email')
+        email = self.driver.find_element_by_id('register-email')
         email.send_keys(username)
-        self.driver.find_element_by_id('password').send_keys(password)
+        self.driver.find_element_by_id('register-password').send_keys(password)
         email.submit()
-        self.driver.get('https://{}/messages/{}'.format(urlparse(self.driver.current_url).netloc, channel))
+        time.sleep(2)
+        self.driver.get('https://discordapp.com/channels/{}/{}'.format(server, channel))
 
         wait = WebDriverWait(self.driver, 100)
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'c-message')))
-        self.latest_message = None
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'comment')))
+        self.latest_parsed = None
 
 
     def scrape(self):
-        messages = self.driver.find_elements_by_class_name('c-message')
+        blocks = self.driver.find_elements_by_class_name('comment')
         parsed = []
         author_name = 'NA'
         author_id = 'NA'
 
-        for message in messages:
-            text = message.find_element_by_class_name('c-message__body').text
-            timestamp_element = message.find_element_by_class_name('c-timestamp')
-            timestamp = timestamp_element.find_element_by_tag_name('span').get_attribute('innerHTML')
-            message_id = timestamp_element.get_attribute('href').split('/')[-1]
-            item = {
-                'message_id': message_id,
-                'text': text,
-                'timestamp': timestamp
-            }
+        for block in blocks[1:]:
+            author_name = block.find_element_by_class_name('user-name').text
+            messages = block.find_elements_by_xpath('div')
+            for message in messages:
+                text = message.find_element_by_class_name('markup').text
+                item = {
+                    'author_name': author_name,
+                    'text' : text
+                }
+                parsed.append(item)
 
-            author_elements = message.find_elements_by_class_name('c-message__sender_link')
-            if len(author_elements) != 0:
-                author_name = author_elements[0].text
-                author_id = author_elements[0].get_attribute('href').split('/')[-1]
-            
-            item['author_name'] = author_name
-            item['author_id'] = author_id
-            parsed.append(item)
-
+        latest_parsed_temp = [x for x in parsed]
         ret = []
+
         try:
-            while parsed[-1]['message_id'] != self.latest_message:
-                ret.append(parsed.pop())
-        except IndexError:
-            pass
-        try:
-            self.latest_message = ret[0]['message_id']
-        except IndexError:
+            while True:
+                if (self.latest_parsed == None):
+                    ret = parsed[::-1]
+                    break
+                elif (parsed[-1]!=self.latest_parsed[-1]):
+                    ret.append(parsed.pop())
+                else:
+                    breakdown = False
+                    for i in range(len(parsed)):
+                        if (parsed[i]!=self.latest_parsed[i]):
+                            breakdown = True
+                            break
+                    if (breakdown):
+                        ret.append(parsed.pop())
+                    else:
+                        break
+        except :
             pass
 
+        self.latest_parsed = latest_parsed_temp
         return ret[::-1]
 
 
