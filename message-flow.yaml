@@ -1,8 +1,8 @@
 message_flow:
-  - in: [C9EBL2GBD, C9DQPQJQG]
-    out: C9R1NTG00
-  - in: [C9DQPQJQG]
-    out: C9SNE7FGX
+  - in: [426066861898072068, 426066861898072067]
+    out: 426122531968253954
+  # - in: [C9DQPQJQG]
+  #   out: C9SNE7FGX
 
 truncated_words:
   - Palm Beach VIP Signal

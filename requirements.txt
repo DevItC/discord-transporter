@@ -1,4 +1,4 @@
 selenium
-slackclient
+discord.py
 pyyaml
 rq

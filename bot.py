@@ -7,7 +7,8 @@ from rq import Queue
 from rq.job import Job
 from worker import conn
 import yaml
-from slackclient import SlackClient
+import discord
+import asyncio
 from urllib.parse import urlparse
 
 
@@ -15,7 +16,7 @@ from urllib.parse import urlparse
 class DiscordScraper:
     def __init__(self, username, password, server, channel):
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
@@ -28,7 +29,7 @@ class DiscordScraper:
         self.driver.get('https://discordapp.com/channels/{}/{}'.format(server, channel))
 
         wait = WebDriverWait(self.driver, 100)
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'comment')))
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'guilds-wrapper')))
         self.latest_parsed = None
 
 
@@ -37,17 +38,22 @@ class DiscordScraper:
         parsed = []
         author_name = 'NA'
         author_id = 'NA'
+        print(len(blocks))
 
-        for block in blocks[1:]:
-            author_name = block.find_element_by_class_name('user-name').text
-            messages = block.find_elements_by_xpath('div')
-            for message in messages:
-                text = message.find_element_by_class_name('markup').text
-                item = {
-                    'author_name': author_name,
-                    'text' : text
-                }
-                parsed.append(item)
+        for block in blocks:
+            try:
+                author_name = block.find_element_by_class_name('user-name').text
+                messages = block.find_elements_by_xpath('div')
+                for message in messages:
+                    text = message.find_element_by_class_name('markup').text
+                    item = {
+                        'author_name': author_name,
+                        'text' : text
+                    }
+                    parsed.append(item)
+            except:
+                pass
+        print(len(parsed))
 
         latest_parsed_temp = [x for x in parsed]
         ret = []
@@ -71,6 +77,7 @@ class DiscordScraper:
                         break
         except :
             pass
+        print(len(ret))
 
         self.latest_parsed = latest_parsed_temp
         return ret[::-1]
@@ -78,13 +85,15 @@ class DiscordScraper:
 
 
 class DiscordTransporter:
-    def __init__(self, username, password, slack_token, message_flow, truncated_words):
+    def __init__(self, username, password, inserver, message_flow, truncated_words):
         self.scrapers = []
         for channel in message_flow['in']:
-            self.scrapers.append(SlackScraper(username=username, password=password, channel=channel))
+            self.scrapers.append(DiscordScraper(username=username, password=password, server=inserver, channel=channel))
         
         self.q = Queue(connection=conn)
-        self.sc = SlackClient(slack_token)
+        self.dc = discord.Client()
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.dc.login(username, password))
         self.message_flow = message_flow
         self.words = truncated_words
 
@@ -95,13 +104,15 @@ class DiscordTransporter:
             messages = [message.replace(w, '') for message in messages]
 
         for message in messages:
-            task = self.q.enqueue_call(func='bot.post_message', args=(message, self.sc, self.message_flow['out']), result_ttl=5000, timeout=3600)
+            print('doing')
+            task = self.q.enqueue_call(func='bot.post_message', args=(message, self.dc, self.message_flow['out']), result_ttl=5000, timeout=3600)
+            print('done')
 
 
-
-def post_message(message, sc, channel):
-    sc.api_call('chat.postMessage', channel=channel,
-                        text='{} [{}]: {}'.format(message['author_name'], message['timestamp'], message['text']))
+def post_message(message, client, channel):
+    loop = asyncio.get_event_loop()
+    channel = discord.Object(id=channel)
+    loop.run_until_complete(client.send_message(channel, '{}: {}'.format(message['author_name'], message['text'])))
 
 
 def main():
@@ -110,7 +121,7 @@ def main():
         config = yaml.load(f)
         username = config['CREDS']['USERNAME']
         password = config['CREDS']['PASSWORD']
-        slack_token = config['SLACKAPI']['TOKEN']
+        inserver = config['INSERVER']
 
     with open('message-flow.yaml') as f:
         config = yaml.load(f)
@@ -119,7 +130,7 @@ def main():
 
     transporters = []
     for flow in flows:
-        transporters.append(SlackTransporter(username, password, slack_token, flow, words))
+        transporters.append(DiscordTransporter(username, password, inserver, flow, words))
     print('[*] Running...')
 
     while True:
