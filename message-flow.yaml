@@ -1,0 +1,34 @@
+message_flow:
+  - in: [C9EBL2GBD, C9DQPQJQG]
+    out: C9R1NTG00
+  - in: [C9DQPQJQG]
+    out: C9SNE7FGX
+
+truncated_words:
+  - Palm Beach VIP Signal
+  - Dz871 Signal Result
+  - Cryptoland Elite Signal
+  - Cryptonizors Premium Signal
+  - Asian Whales Signal
+
+
+# message_flow:
+#   - in: [Palm-Beach-VIP, DZ871, Asian Whales, Cryptonizors, Cryptoland Elite]
+#     out: Premium Low Risk Signals
+#   - in: [Cryptonizers Bitmex Calls]
+#     out: Premium BTC Short Calls
+#   - in: [Crypto Bullet, Crypto Whales Club]
+#     out: Premium High Risk Signals
+#   - in: [Trade Results]
+#     out: Signal Outcomes
+#   - in: [Airdrops]
+#     out: Premium Airdrops
+#   - in: [Crypto News]
+#     out: Crypto News
+
+# truncated_words:
+#   - Palm Beach VIP Signal
+#   - Dz871 Signal Result
+#   - Cryptoland Elite Signal
+#   - Cryptonizors Premium Signal
+#   - Asian Whales Signal
