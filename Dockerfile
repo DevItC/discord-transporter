@@ -19,6 +19,10 @@ ENV DISPLAY=:99
 ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 
 # install selenium
-RUN pip install selenium==3.8.0
+RUN pip install selenium
+
+# priviledged mode commands
+sudo umount /dev/shm
+sudo mount -t tmpfs -o rw,nosuid,nodev,noexec,relatime,size=512M tmpfs /dev/shm
 
 CMD python bot.py

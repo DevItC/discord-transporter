@@ -10,6 +10,7 @@ import yaml
 import discord
 import asyncio
 from urllib.parse import urlparse
+import re
 
 
 
@@ -17,6 +18,7 @@ class DiscordScraper:
     def __init__(self, username, password, server, channel):
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
@@ -98,7 +100,7 @@ class DiscordTransporter:
 
     @staticmethod
     def strip(message, word):
-        message['text'] = message['text'].replace(word, '')
+        message['text'] = re.sub(r'\@(\w+)', '', message['text'].replace(word, ''))
         return message
 
     def run(self):
