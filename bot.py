@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 class DiscordScraper:
     def __init__(self, username, password, server, channel):
         options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
+        options.add_argument('--headless')
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
@@ -38,7 +38,6 @@ class DiscordScraper:
         parsed = []
         author_name = 'NA'
         author_id = 'NA'
-        print(len(blocks))
 
         for block in blocks:
             try:
@@ -53,7 +52,6 @@ class DiscordScraper:
                     parsed.append(item)
             except:
                 pass
-        print(len(parsed))
 
         latest_parsed_temp = [x for x in parsed]
         ret = []
@@ -78,7 +76,6 @@ class DiscordScraper:
                         break
         except :
             pass
-        print(len(ret))
 
         self.latest_parsed = latest_parsed_temp
         return ret[::-1]
@@ -86,48 +83,50 @@ class DiscordScraper:
 
 
 class DiscordTransporter:
-    def __init__(self, username, password, inserver, message_flow, truncated_words):
+    def __init__(self, config, message_flow, truncated_words):
         self.scrapers = []
         for channel in message_flow['in']:
-            self.scrapers.append(DiscordScraper(username=username, password=password, server=inserver, channel=channel))
+            self.scrapers.append(DiscordScraper(username=config['INSERVER']['USERNAME'], password=config['INSERVER']['PASSWORD'],
+                                 server=config['INSERVER']['ID'], channel=channel))
         
         self.q = Queue(connection=conn)
         self.dc = discord.Client()
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.dc.login(username, password))
+        loop.run_until_complete(self.dc.login(config['OUTSERVER']['TOKEN']))
         self.message_flow = message_flow
         self.words = truncated_words
+
+    @staticmethod
+    def strip(message, word):
+        message['text'] = message['text'].replace(word, '')
+        return message
 
     def run(self):
         messages = [scraper.scrape() for scraper in self.scrapers]
         messages = [item for sublist in messages for item in sublist]
         for w in self.words:
-            messages = [message.replace(w, '') for message in messages]
+            messages = [self.strip(message, w) for message in messages]
 
         for message in messages:
-            print('doing')
-            task = self.q.enqueue_call(func='bot.post_message', args=(message, self.dc, self.message_flow['out']), result_ttl=5000, timeout=3600)
-            print('done')
+            # task = self.q.enqueue_call(func='bot.post_message', args=(message, self.dc, self.message_flow['out']), result_ttl=5000, timeout=3600)
+            post_message(message, self.dc, self.message_flow['out'])
 
 
 def post_message(message, client, channel):
     loop = asyncio.get_event_loop()
     channel = discord.Object(id=channel)
-    loop.run_until_complete(client.send_message(channel, '{}: {}'.format(message['author_name'], message['text'])))
+    loop.run_until_complete(client.send_message(channel, message['text']))
 
 
 def main():
     print('[*] Booting up...')
     with open('config.yaml') as f:
         config = yaml.load(f)
-        username = config['CREDS']['USERNAME']
-        password = config['CREDS']['PASSWORD']
-        inserver = config['INSERVER']
 
     with open('message-flow.yaml') as f:
-        config = yaml.load(f)
-        flows = config['message_flow']
-        words = config['truncated_words']
+        flow_yaml = yaml.load(f)
+        flows = flow_yaml['message_flow']
+        words = flow_yaml['truncated_words']
 
     transporters = []
     for flow in flows:
