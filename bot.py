@@ -130,7 +130,7 @@ def main():
 
     transporters = []
     for flow in flows:
-        transporters.append(DiscordTransporter(username, password, inserver, flow, words))
+        transporters.append(DiscordTransporter(config, flow, words))
     print('[*] Running...')
 
     while True:
