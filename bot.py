@@ -11,6 +11,8 @@ import discord
 import asyncio
 from urllib.parse import urlparse
 import re
+import requests
+import json
 
 
 
@@ -110,14 +112,12 @@ class DiscordTransporter:
             messages = [self.strip(message, w) for message in messages]
 
         for message in messages:
-            # task = self.q.enqueue_call(func='bot.post_message', args=(message, self.dc, self.message_flow['out']), result_ttl=5000, timeout=3600)
-            post_message(message, self.dc, self.message_flow['out'])
+            post_message(message, self.message_flow['out'][0], self.message_flow['out'][1])
 
 
-def post_message(message, client, channel):
-    loop = asyncio.get_event_loop()
-    channel = discord.Object(id=channel)
-    loop.run_until_complete(client.send_message(channel, message['text']))
+def post_message(message, WHID, WHToken):
+    URL = 'https://discordapp.com/api/webhooks/{}/{}'.format(WHID, WHToken)
+    r = requests.post(baseURL, data={'content': message})
 
 
 def main():
