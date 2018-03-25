@@ -27,11 +27,9 @@ class DiscordScraper:
 
         email = self.driver.find_element_by_id('register-email')
         email.send_keys(username)
-        time.sleep(2)
         passfield = self.driver.find_element_by_id('register-password')
-        time.sleep(2)
         passfield.send_keys(password)
-        time.sleep(2)
+        time.sleep(15)
         passfield.submit()
         self.driver.get('https://discordapp.com/channels/{}/{}'.format(server, channel))
 
