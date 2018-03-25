@@ -19,7 +19,7 @@ import json
 class DiscordScraper:
     def __init__(self, username, password, server, channel):
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get('https://www.discordapp.com/login')
@@ -28,9 +28,11 @@ class DiscordScraper:
         email = self.driver.find_element_by_id('register-email')
         email.send_keys(username)
         time.sleep(2)
-        self.driver.find_element_by_id('register-password').send_keys(password)
+        passfield = self.driver.find_element_by_id('register-password')
         time.sleep(2)
-        email.submit()
+        passfield.send_keys(password)
+        time.sleep(2)
+        passfield.submit()
         self.driver.get('https://discordapp.com/channels/{}/{}'.format(server, channel))
 
         wait = WebDriverWait(self.driver, 100)
