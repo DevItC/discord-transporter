@@ -35,6 +35,7 @@ class DiscordScraper:
 
         wait = WebDriverWait(self.driver, 100)
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'guilds-wrapper')))
+        time.sleep(30)
         self.latest_parsed = None
 
 
