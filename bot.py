@@ -25,20 +25,21 @@ class DiscordScraper:
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
 
-        email = self.driver.find_element_by_id('register-email')
-        email.send_keys(username)
-        passfield = self.driver.find_element_by_id('register-password')
-        passfield.send_keys(password)
-        time.sleep(15)
-        passfield.submit()
-        time.sleep(15)
-        url = 'https://discordapp.com/channels/{}/{}'.format(server, channel)
-        print(url)
-        self.driver.get(url)
+        try:
+            email = self.driver.find_element_by_id('register-email')
+            email.send_keys(username)
+            passfield = self.driver.find_element_by_id('register-password')
+            passfield.send_keys(password)
+            passfield.submit()
+            assert self.driver.current_url in ['https://discordapp.com/app', 'https://discordapp.com/channels/@me']
+        except:
+            print('[*] Failed login attempt. Relying on user to do it.')
+            pass
 
+        url = 'https://discordapp.com/channels/{}/{}'.format(server, channel)
+        self.driver.get(url)
         wait = WebDriverWait(self.driver, 100)
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'guilds-wrapper')))
-        time.sleep(15)
         self.latest_parsed = None
 
 
