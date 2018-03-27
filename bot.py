@@ -34,6 +34,7 @@ class DiscordScraper:
             assert self.driver.current_url in ['https://discordapp.com/app', 'https://discordapp.com/channels/@me']
         except:
             print('[*] Failed login attempt. Relying on user to do it.')
+            time.sleep(60)
             pass
 
         url = 'https://discordapp.com/channels/{}/{}'.format(server, channel)
