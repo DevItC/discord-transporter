@@ -31,11 +31,14 @@ class DiscordScraper:
         passfield.send_keys(password)
         time.sleep(15)
         passfield.submit()
-        self.driver.get('https://discordapp.com/channels/{}/{}'.format(server, channel))
+        time.sleep(15)
+        url = 'https://discordapp.com/channels/{}/{}'.format(server, channel)
+        print(url)
+        self.driver.get(url)
 
         wait = WebDriverWait(self.driver, 100)
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'guilds-wrapper')))
-        time.sleep(30)
+        time.sleep(15)
         self.latest_parsed = None
 
 
