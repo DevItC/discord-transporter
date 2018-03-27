@@ -18,10 +18,11 @@ import json
 
 class DiscordScraper:
     def __init__(self, username, password, server, channel):
-        options = webdriver.ChromeOptions()
+        # options = webdriver.ChromeOptions()
         # options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        self.driver = webdriver.Chrome(chrome_options=options)
+        # options.add_argument('--no-sandbox')
+        # self.driver = webdriver.Chrome(chrome_options=options)
+        self.driver = webdriver.Firefox()
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
 
@@ -31,9 +32,10 @@ class DiscordScraper:
             passfield = self.driver.find_element_by_id('register-password')
             passfield.send_keys(password)
             passfield.submit()
+            time.sleep(10)
             assert self.driver.current_url in ['https://discordapp.com/app', 'https://discordapp.com/channels/@me']
         except:
-            print('[*] Failed login attempt. Relying on user to do it.')
+            print('[*] Failed auto-login attempt. Relying on user to do it.')
             time.sleep(60)
             pass
 
