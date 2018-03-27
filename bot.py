@@ -154,7 +154,7 @@ def main():
     while True:
         for index, p in enumerate(transporters):
             if not p.is_alive():
-                print('[*] Restarting a transporter. PID: {}'.format(p.pid()))
+                print('[*] Restarting a transporter. PID: {}'.format(p.pid))
                 del transporters[index]
                 transporters.insert(index, Process(target=process, args=(config, flows[index], words)))
 
