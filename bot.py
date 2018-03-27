@@ -121,12 +121,11 @@ class DiscordTransporter:
             messages = [self.strip(message, w) for message in messages]
 
         for message in messages:
-            post_message(message['text'], self.message_flow['out'][0], self.message_flow['out'][1])
+            post_message(message['text'], self.message_flow['out'])
 
 
-def post_message(message, WHID, WHToken):
-    URL = 'https://discordapp.com/api/webhooks/{}/{}'.format(WHID, WHToken)
-    r = requests.post(URL, data={'content': message})
+def post_message(message, webhook):
+    r = requests.post(webhook, data={'content': message})
 
 
 def process(config, flow, words):
