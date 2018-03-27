@@ -8,6 +8,9 @@ from urllib.parse import urlparse
 import re
 import requests
 import json
+from multiprocessing import Process
+import os
+import sys
 
 
 
@@ -36,9 +39,8 @@ class DiscordScraper:
             time.sleep(10)
             assert self.driver.current_url in ['https://discordapp.com/app', 'https://discordapp.com/channels/@me']
         except:
-            print('[*] Failed auto-login attempt. Relying on user to do it.')
-            time.sleep(60)
-            pass
+            print('[*] Failed auto-login. Transporter will be restarted. PID: {}'.format(os.getpid()))
+            sys.exit()
 
         url = 'https://discordapp.com/channels/{}/{}'.format(server, channel)
         self.driver.get(url)
@@ -127,6 +129,14 @@ def post_message(message, WHID, WHToken):
     r = requests.post(URL, data={'content': message})
 
 
+def process(config, flow, words):
+    print('[*] Starting transporter. PID: {}'.format(os.getpid()))
+    transporter = DiscordTransporter(config, flow, words)
+    print('[*] Transporter with PID {} started running.'.format(os.getpid()))
+    while True:
+        transporter.run()
+
+
 def main():
     print('[*] Booting up...')
     with open('config.yaml') as f:
@@ -137,17 +147,17 @@ def main():
         flows = flow_yaml['message_flow']
         words = flow_yaml['truncated_words']
 
-    transporters = []
-    for flow in flows:
-        print()
-        print('[*] Starting transporter {}...'.format(flow['out'][0]))
-        transporters.append(DiscordTransporter(config, flow, words))
-    print()
-    print('[*] Running...')
+    transporters = [Process(target=process, args=(config, flow, words)) for flow in flows]
+    for p in transporters:
+        p.start()
+    time.sleep(100)
 
     while True:
-        result = [t.run() for t in transporters]
-
+        for index, p in enumerate(transporters):
+            if not p.is_alive():
+                print('[*] Restarting a transporter. PID: {}'.format(p.pid()))
+                del transporters[index]
+                transporters.insert(index, Process(target=process, args=(config, flows[index], words)))
 
 
 if __name__=='__main__':
