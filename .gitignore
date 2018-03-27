@@ -101,5 +101,4 @@ ENV/
 .mypy_cache/
 
 # Secrets
-config.yaml
-message-flow.yaml
+*.yaml
