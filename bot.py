@@ -13,10 +13,12 @@ import json
 
 class DiscordScraper:
     def __init__(self, username, password, server, channel):
-        # options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
-        # options.add_argument('--no-sandbox')
-        # self.driver = webdriver.Chrome(chrome_options=options)
+        '''
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        self.driver = webdriver.Chrome(chrome_options=options)
+        '''
         
         options = webdriver.FirefoxOptions()
         options.add_argument('--headless')
@@ -112,16 +114,17 @@ class DiscordTransporter:
     def run(self):
         messages = [scraper.scrape() for scraper in self.scrapers]
         messages = [item for sublist in messages for item in sublist]
+        [item for sublist in [scraper.scrape() for scraper in self.scrapers] for item in sublist]
         for w in self.words:
             messages = [self.strip(message, w) for message in messages]
 
         for message in messages:
-            post_message(message, self.message_flow['out'][0], self.message_flow['out'][1])
+            post_message(message['text'], self.message_flow['out'][0], self.message_flow['out'][1])
 
 
 def post_message(message, WHID, WHToken):
     URL = 'https://discordapp.com/api/webhooks/{}/{}'.format(WHID, WHToken)
-    r = requests.post(baseURL, data={'content': message})
+    r = requests.post(URL, data={'content': message})
 
 
 def main():
@@ -136,8 +139,10 @@ def main():
 
     transporters = []
     for flow in flows:
-        print('[*] Starting transporter...')
+        print()
+        print('[*] Starting transporter {}...'.format(flow['out'][0]))
         transporters.append(DiscordTransporter(config, flow, words))
+    print()
     print('[*] Running...')
 
     while True:

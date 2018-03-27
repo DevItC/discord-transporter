@@ -1,4 +1,3 @@
 selenium
-discord.py
 pyyaml
-rq
+requests
