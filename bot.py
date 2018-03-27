@@ -7,7 +7,6 @@ from rq import Queue
 from rq.job import Job
 from worker import conn
 import yaml
-import discord
 import asyncio
 from urllib.parse import urlparse
 import re
@@ -22,7 +21,11 @@ class DiscordScraper:
         # options.add_argument('--headless')
         # options.add_argument('--no-sandbox')
         # self.driver = webdriver.Chrome(chrome_options=options)
-        self.driver = webdriver.Firefox()
+        
+        options = webdriver.FirefoxOptions()
+        options.add_argument('--headless')
+        self.driver = webdriver.Firefox(firefox_options=options)
+        
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
 
@@ -103,9 +106,6 @@ class DiscordTransporter:
                                  server=config['INSERVER']['ID'], channel=channel))
         
         self.q = Queue(connection=conn)
-        self.dc = discord.Client()
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.dc.login(config['OUTSERVER']['TOKEN']))
         self.message_flow = message_flow
         self.words = truncated_words
 
@@ -141,6 +141,7 @@ def main():
 
     transporters = []
     for flow in flows:
+        print('[*] Starting transporter...')
         transporters.append(DiscordTransporter(config, flow, words))
     print('[*] Running...')
 
