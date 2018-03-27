@@ -3,11 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from rq import Queue
-from rq.job import Job
-from worker import conn
 import yaml
-import asyncio
 from urllib.parse import urlparse
 import re
 import requests
@@ -105,7 +101,6 @@ class DiscordTransporter:
             self.scrapers.append(DiscordScraper(username=config['INSERVER']['USERNAME'], password=config['INSERVER']['PASSWORD'],
                                  server=config['INSERVER']['ID'], channel=channel))
         
-        self.q = Queue(connection=conn)
         self.message_flow = message_flow
         self.words = truncated_words
 
