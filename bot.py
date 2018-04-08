@@ -1,4 +1,5 @@
 import time
+import argparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,17 +16,16 @@ import sys
 
 
 class DiscordScraper:
-    def __init__(self, username, password, server, channel):
-        '''
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        self.driver = webdriver.Chrome(chrome_options=options)
-        '''
-        
-        options = webdriver.FirefoxOptions()
-        options.add_argument('--headless')
-        self.driver = webdriver.Firefox(firefox_options=options)
+    def __init__(self, username, password, server, channel, browser):
+        if browser!='firefox':
+            options = webdriver.ChromeOptions()
+            options.add_argument('--headless')
+            options.add_argument('--no-sandbox')
+            self.driver = webdriver.Chrome(chrome_options=options)
+        else:
+            options = webdriver.FirefoxOptions()
+            options.add_argument('--headless')
+            self.driver = webdriver.Firefox(firefox_options=options)
         
         self.driver.get('https://www.discordapp.com/login')
         time.sleep(2)
@@ -99,11 +99,11 @@ class DiscordScraper:
 
 
 class DiscordTransporter:
-    def __init__(self, config, message_flow, truncated_words):
+    def __init__(self, config, message_flow, truncated_words, browser):
         self.scrapers = []
         for channel in message_flow['in']:
             self.scrapers.append(DiscordScraper(username=config['INSERVER']['USERNAME'], password=config['INSERVER']['PASSWORD'],
-                                 server=config['INSERVER']['ID'], channel=channel))
+                                 server=config['INSERVER']['ID'], channel=channel, browser=browser))
         
         self.message_flow = message_flow
         self.words = truncated_words
@@ -128,25 +128,31 @@ def post_message(message, webhook):
     r = requests.post(webhook, data={'content': message})
 
 
-def process(config, flow, words):
+def process(config, flow, words, browser):
     print('[*] Starting transporter. PID: {}'.format(os.getpid()))
-    transporter = DiscordTransporter(config, flow, words)
+    transporter = DiscordTransporter(config, flow, words, browser)
     print('[*] Transporter with PID {} started running.'.format(os.getpid()))
     while True:
         transporter.run()
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--creds', help='Credentials YAML file. Check README for details.', type=str, default='creds.yaml')
+    parser.add_argument('-f', '--flow', help='Message Flow YAML file. Check README for details.', type=str, default='message-flow.yaml')
+    parser.add_argument('-b', '--browser', help='Whether to use Firefox or Chrome for scraping.', type=str, choices=['firefox', 'chrome'], default='firefox')
+    args = parser.parse_args()
+    
     print('[*] Booting up...')
-    with open('config.yaml') as f:
+    with open(args.creds) as f:
         config = yaml.load(f)
 
-    with open('message-flow.yaml') as f:
+    with open(args.flow) as f:
         flow_yaml = yaml.load(f)
         flows = flow_yaml['message_flow']
         words = flow_yaml['truncated_words']
 
-    transporters = [Process(target=process, args=(config, flow, words)) for flow in flows]
+    transporters = [Process(target=process, args=(config, flow, words, args.browser)) for flow in flows]
     for p in transporters:
         p.start()
     time.sleep(100)
@@ -156,7 +162,7 @@ def main():
             if not p.is_alive():
                 print('[*] Restarting a transporter. PID: {}'.format(p.pid))
                 del transporters[index]
-                transporters.insert(index, Process(target=process, args=(config, flows[index], words)))
+                transporters.insert(index, Process(target=process, args=(config, flows[index], words, args.browser)))
 
 
 if __name__=='__main__':
