@@ -25,16 +25,6 @@ From the URL of any Discord channel, we can get the server ID and channel ID. Th
 
     https://discordapp.com/channels/SERVER_ID/CHANNEL_ID
 
-For example, we can take a look at the "introduction" channel of the "r/creativethoughts" Discord server. The URL of the channel is 
-
-    https://discordapp.com/channels/293286532851433473/428819612239659010
-
-So, for this channel, 
-```
-SERVER_ID=293286532851433473
-CHANNEL_ID=428819612239659010
-```
-
 ### Creating Webhooks
 
 The program uses webhooks to post messages to your discord channels. For every discord channel you want to post message to, you have to create a webhook for that. Check out [this article](https://support.discordapp.com/hc/en-us/articles/228383668-Intro-to-Webhooks) for understaning how to create a webhook for your channel.
